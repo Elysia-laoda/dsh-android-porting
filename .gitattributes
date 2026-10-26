@@ -1,0 +1,4 @@
+# Patches must stay byte-exact LF: CRLF conversion breaks "git apply" on Windows checkouts.
+*.patch -text
+# Everything else normalizes to LF; PowerShell 7 reads LF fine.
+* text=auto eol=lf
