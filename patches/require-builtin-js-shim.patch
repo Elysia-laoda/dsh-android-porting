@@ -1,0 +1,50 @@
+diff --git a/lib/index.js b/lib/index.js
+index 06df043..08a6654 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,25 +1,27 @@
+ "use strict";
+-var __importDefault = (this && this.__importDefault) || function (mod) {
+-    return (mod && mod.__esModule) ? mod : { "default": mod };
+-};
+-Object.defineProperty(exports, "__esModule", { value: true });
+-exports.requireBuiltin = requireBuiltin;
+-exports.isAllowedInternalId = isAllowedInternalId;
+-exports.getBindingInfo = getBindingInfo;
+-const node_path_1 = __importDefault(require("node:path"));
+-const { createEntryApi } = require('node-addon-native-custom-loader');
+-const api = createEntryApi(node_path_1.default.resolve(__dirname, '..'));
++// Android 移植用的替代实现（DSH 手机版）。
++// 官方 node-addon-require-builtin 只提供 prebuilt 原生绑定，没有 android-x64 版本；
++// 它对外只有三个函数：把 Node 内部模块 id（internal/...）交给 require 解析。
++// 用 --expose-internals 启动 Node 时，普通 require 就能拿到这些内部模块，
++// 因此这里用纯 JS 实现同样的能力，避免为 Android 编译原生 addon。
+ function requireBuiltin(moduleId) {
+-    return api.requireBuiltin(moduleId);
++  return require(moduleId);
+ }
+ function isAllowedInternalId(moduleId) {
+-    return api.isAllowedInternalId(moduleId);
++  if (typeof moduleId !== 'string' || moduleId.length === 0) return false;
++  try {
++    require.resolve(moduleId);
++    return true;
++  } catch {
++    return false;
++  }
+ }
+ function getBindingInfo() {
+-    return api.getBindingInfo();
++  return {
++    backend: 'js-expose-internals',
++    platform: process.platform,
++    arch: process.arch,
++    versions: { node: process.version, napi: process.versions.napi },
++  };
+ }
+-exports.default = {
+-    requireBuiltin,
+-    isAllowedInternalId,
+-    getBindingInfo,
+-};
++module.exports = { requireBuiltin, isAllowedInternalId, getBindingInfo, default: { requireBuiltin, isAllowedInternalId, getBindingInfo } };

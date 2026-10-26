@@ -1,0 +1,30 @@
+diff --git a/lib/index.js b/lib/index.js
+index 8247fd4..8992fa6 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,7 +1,7 @@
+ import z from "@deepseek-ai/schemastery";
+ import { SessionFormatUnsupportedMigrationError, createSessionFormatCatalogWithChildren, historicalSessionFormatCatalog, sessionFormatCatalog } from "@deepseek-ai/dsh-session-format-catalog";
+ import { readdirSync } from "node:fs";
+-import { link, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, stat, truncate } from "node:fs/promises";
++import { link, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rename, rm, stat, truncate } from "node:fs/promises";
+ import { basename, dirname, isAbsolute, join, parse, resolve, toNamespacedPath } from "node:path";
+ import { performance } from "node:perf_hooks";
+ import { scheduler } from "node:timers/promises";
+@@ -3223,7 +3223,15 @@ var JsonlSessionPersistence = class extends SessionPersistence {
+ 		const tmp = await this.writeSyncedTempFile(finalPath, content);
+ 		let linked = false;
+ 		try {
+-			await link(tmp, finalPath);
++			try {
++				await link(tmp, finalPath);
++			} catch (error) {
++				// Android denies link(2) inside app data (EACCES); rename(2) is atomic within one
++				// filesystem and the collision backstop above already ran, so publish through it.
++				const code = error?.code;
++				if (code !== "EACCES" && code !== "EPERM" && code !== "EOPNOTSUPP" && code !== "ENOSYS" && code !== "EXDEV") throw error;
++				await rename(tmp, finalPath);
++			}
+ 			linked = true;
+ 		} finally {
+ 			/* v8 ignore next -- link failure is the TOCTOU/IO race guarded above; not reachable in test */

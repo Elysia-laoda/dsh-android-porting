@@ -1,0 +1,31 @@
+diff --git a/lib/flock.js b/lib/flock.js
+index bf2a1b0..d0ed2b7 100644
+--- a/lib/flock.js
++++ b/lib/flock.js
+@@ -8,10 +8,15 @@ function loadBinding() {
+         return binding;
+     const { platform, arch } = process;
+     if (platform !== 'linux' && platform !== 'darwin') {
+-        throw Object.assign(new Error(`flock is not supported on ${platform}-${arch}`), {
+-            code: 'ERR_FLOCK_UNSUPPORTED_PLATFORM',
+-            syscall: 'flock',
+-        });
++        // Android port: the upstream binding ships no android build and Node exposes no flock
++        // there. The lock here only serializes writers of one session log; the mobile app runs a
++        // single runtime process per app data directory, so contention cannot happen and the
++        // lock is granted without a syscall. Revisit if the app ever runs two runtimes on one
++        // home directory.
++        return { tryLock(_fd, callback) {
++            // Report success (errno 0) on the next tick, mirroring the native callback contract.
++            queueMicrotask(() => callback(0));
++        } };
+     }
+     let filename = 'system.node';
+     if (platform === 'linux') {
+@@ -48,4 +53,4 @@ export async function tryLockExclusive(fd) {
+         errno,
+         syscall: 'flock',
+     });
+-}
++}
+\ No newline at end of file
