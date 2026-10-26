@@ -7,6 +7,9 @@
 - 上游：<https://github.com/deepseek-ai/deepseek-harness>（MIT）
 - 适用面：任何把 DSH（或类似「Node 运行时 + Web UI」的组合）塞进 APK 的做法
 
+**上游讨论**：<https://github.com/deepseek-ai/deepseek-harness/discussions/11047>
+（上游仓库关闭了 Issues，按 CONTRIBUTING 的指引发在 Discussions。）
+
 ## 补丁一览
 
 | 补丁 | 症状 | 一句话根因 |
